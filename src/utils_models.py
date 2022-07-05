@@ -1,6 +1,7 @@
 import torch.nn.functional as F
 import torch
 
+#Standard FC DDQN based on Van etal
 class DDQN(torch.nn.Module):
     def __init__(self,state_size,num_actions):
         super(DDQN, self).__init__()
@@ -51,6 +52,7 @@ class DDQN(torch.nn.Module):
             action_index = torch.argmax(Q, dim=1) #picking action with max reward
         return action_index.item()
 
+#CNN Dueling DQN
 class CNN_DDQN(torch.nn.Module):
     def __init__(self,state_size):
         super(CNN_DDQN, self).__init__()
@@ -110,6 +112,7 @@ class CNN_DDQN(torch.nn.Module):
             action_index = torch.argmax(Q, dim=1) #picking action with max reward
         return action_index.item()
 
+#CNN DQN
 class CNN_DQN(torch.nn.Module):
     def __init__(self,state_size):
         super(CNN_DQN, self).__init__()

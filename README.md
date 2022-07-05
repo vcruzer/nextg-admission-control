@@ -17,3 +17,9 @@ The goal is to have scenario/environment where requests will arrive needing reso
 - *./utils_parameters.py* has some global definitions for imports
 - *./utils_replay_buffers.py* contains a set of different replay buffers used for testing
 - *./utils.py* has a few general functions that don't fit on the other categories
+
+## Reference
+
+If using this code for anything, please cite the following paper:
+
+*(Waiting IEEE Release)*

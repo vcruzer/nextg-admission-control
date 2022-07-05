@@ -15,10 +15,10 @@ class Request:
 
         #duration_ts = int(np.random.exponential(30))
         duration_ts = int(np.random.exponential(5))
-        self.duration = duration_ts if duration_ts>1 else 2
-        self.total_patience = int(self.duration/2)
+        self.duration = duration_ts if duration_ts>1 else 2 #job duration after acceptance
+        self.total_patience = int(self.duration/2) #amount of maximum waiting time inside the queue
         self.priority = random.randrange(0,3)
-        self.clazz = r_class
+        self.clazz = r_class #service class
         self.id = request_id
 
         self.profit_tunit = -1 #updated at the time of acceptance
@@ -26,12 +26,11 @@ class Request:
         self.job_end = -1 #updated when job starts executing
         self.arrival_ts = -1 #timestep of arrival
 
-        #TODO Use reference values
-        base_quantity = self._set_base_values(r_class)
+        base_quantity = self._set_base_values(r_class) #base resource values based on service class
 
         self.resource_quantity = {}
         for resource in RESOURCES:
-            self.resource_quantity[resource] = base_quantity[resource] * random.uniform(0.8,1.2)
+            self.resource_quantity[resource] = base_quantity[resource] * random.uniform(0.8,1.2) #varying resource requirements slightly to create variance within the same service class
     
     def profit_per_tunit(self,total_price):
         self.profit_tunit = total_price/self.duration
@@ -100,7 +99,7 @@ class PriorityQueue:
         self.queue.append(request)
         self.queue.sort(key=operator.attrgetter('priority'),reverse=True) #highest priority on top of the queue
        
-    #managing queue and dropping requests
+    #managing queue and dropping requests that timed out
     def update_time(self,current_time_step):
         size = len(self.queue); i=0; cid=0
         while(i<size):
@@ -118,6 +117,7 @@ class PriorityQueue:
 
         self.time_step=current_time_step
     
+    #used for average waiting time per request
     def update_average_waiting(self,current_timestep, request_arrival_timestep):
 
         self.sum_waiting_time += current_timestep - request_arrival_timestep
@@ -162,12 +162,14 @@ class Environment():
         self.executing = [] #jobs executing
         self.completed = [] #jobs completed
 
-        self.total_inp_resources = inp_resources
-        self.free_inp_resources = inp_resources.copy()
+        self.total_inp_resources = inp_resources #total amount of resources
+        self.free_inp_resources = inp_resources.copy() #current amout of free resources
 
-        self.unit_price = {RESOURCES[0]:0.01, RESOURCES[1]:1, RESOURCES[2]:0.05}
-        self.max_profit = 100_000 #for normalization
-        self.scaling = 1e-4
+        self.unit_price = {RESOURCES[0]:0.01, RESOURCES[1]:1, RESOURCES[2]:0.05} #base unit price per resource
+
+        self.scaling = 1e-4 #reward scaling factor
+
+        #control metrics
         self.accepted_per_class = [0 for _ in range(len(REQUEST_CLASSES))]
         self.total_num_requests = [0 for _ in range(len(REQUEST_CLASSES))]
 
@@ -255,7 +257,7 @@ class Environment():
 
         return np.asarray(next_state)
 
-    #calc total profit and update it inside the request
+    #.calc total profit from accepting request
     def _calc_profit(self,request):
     
         base_price = 0; base_cost = 0
@@ -291,7 +293,7 @@ class Environment():
         return self.scaling* total_profit #scaling the profit to help with stability
 
     
-    #remove jobs and release resources if it finished executing
+    #.remove jobs and release resources if it finished executing
     def _update_executing(self,timestep):
   
         size = len(self.executing); i =0
@@ -304,7 +306,7 @@ class Environment():
             else:
                 i+=1
 
-    #add new arrivals and remove timed out requests
+    #.add new arrivals and remove timed out requests
     def _update_queue(self,timestep):
 
         self.p_queue.update_time(timestep) #remove requests from the queue that have run out of patience

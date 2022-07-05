@@ -126,7 +126,7 @@ def simulate_steps(env,memory_replay,models,optimizer,writer,num_actions,params,
 
     #main_ddqn, target_ddqn = models
     main_ddqn, target_ddqn, best_ddqn = models
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1) #scheduler is used if rollback is enabled
 
     for epoch in epochs:
         state = env.reset(); episode_reward = 0; action = 0; reward =0; last_loss=0; accum_loss=0
@@ -155,7 +155,7 @@ def simulate_steps(env,memory_replay,models,optimizer,writer,num_actions,params,
             
 
             next_state, reward = env.step(action,time_step) #apply action
-            episode_reward += reward
+            episode_reward += reward #reward from performing the action
 
             #update replay buffers
             if(params['replay_type']=='priority'):
@@ -290,13 +290,13 @@ if(__name__=='__main__'):
     else:
         params = get_params(dset_name+'.pkl',default=True)
 
-
+    #initializing network and environment
     env,input_size,num_actions,main_ddqn,target_ddqn,best_ddqn = initialize(DATASET_PATH,params['height'],cnn=CNN,dueling=DUELING)
 
     optimizer = torch.optim.Adam(main_ddqn.parameters(), lr=params['lr'])
     models = (main_ddqn,target_ddqn,best_ddqn)
 
-
+    #initializing replay buffer
     if(params['replay_type']=='priority'):
         memory_replay = utils_replay_buffers.PrioritizedMemory(params['replay_memory']) 
     elif(params['replay_type']=='balance'):
@@ -304,6 +304,7 @@ if(__name__=='__main__'):
     else:
         memory_replay = utils_replay_buffers.Memory(params['replay_memory'])
 
+    #emulating the environment
     learn_steps, _ = simulate_steps(env, memory_replay, models, optimizer,writer,num_actions,params,reward_to_beat)
 
     writer.close()
@@ -313,7 +314,8 @@ if(__name__=='__main__'):
     logname = f'../logs/reference_workaround'
     if(os.path.exists(logname)):
         shutil.rmtree(logname)
-        
+    
+    #logging amount of resources consumed during the environemtn
     writer2 = SummaryWriter(logname)
     for r in RESOURCES:
         for ls in range(learn_steps):
